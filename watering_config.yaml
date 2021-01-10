@@ -1,0 +1,3 @@
+topic_root: "home/raisedbed"
+watering_interval: 1  # in days
+preferred_watering_time: [7, 30] # in [hours, minutes]
