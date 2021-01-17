@@ -63,7 +63,7 @@ class WateringManager:
     async def __update_clock_loop(self):
         await asyncio.sleep(1)
         while True:
-            self.__update_clock_of_watering_controller()
+            await self.__update_clock_of_watering_controller()
             await asyncio.sleep(24*60*60)  # Run once a day.
 
     def __init_next_watering_timestamp(self):
@@ -105,9 +105,10 @@ class WateringManager:
         logging.info(f"Send next_watering_timestamp={self.__next_watering_timestamp} to watering controller.")
         await self.__send_control_message(message=f"[nextWatering] {self.__next_watering_timestamp}")
 
-    def __update_clock_of_watering_controller(self):
+    async def __update_clock_of_watering_controller(self):
         logging.info(f"Update clock of watering controller.")
-        raise NotImplementedError
+        now_timestamp = int(datetime.datetime.now().astimezone().timestamp())
+        await self.__send_control_message(message=f"[time] {now_timestamp}")
 
     async def __handle_watering_messages(self, messages: AsyncIterable[str]):
         async for message in messages:
