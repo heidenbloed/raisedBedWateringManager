@@ -113,30 +113,30 @@ class WateringManager:
     async def __handle_watering_messages(self, messages: AsyncIterable[str]):
         async for message in messages:
             if message == "start":
-                logging.info(f"[Watering] scheduled watering started.")
+                logging.info(f"[Watering] Scheduled watering started.")
                 self.__current_status = CurrentStatus.SCHEDULED_WATERING
             elif message == "manual":
-                logging.info(f"[Watering] manual watering started.")
+                logging.info(f"[Watering] Manual watering started.")
                 self.__current_status = CurrentStatus.MANUAL_WATERING
             elif message == "end":
-                logging.info(f"[Watering] scheduled/manual watering ended.")
+                logging.info(f"[Watering] Scheduled/manual watering ended.")
                 self.__current_status = CurrentStatus.IDLE
             elif message == "skip":
-                logging.info(f"[Watering] scheduled/manual watering skipped due to empty tank.")
+                logging.info(f"[Watering] Scheduled/manual watering skipped due to empty tank.")
                 self.__current_status = CurrentStatus.TANK_EMPTY
             else:
-                logging.warning(f"[Watering] unknown {message=}.")
+                logging.warning(f"[Watering] Unknown {message=}.")
 
     async def __handle_tank_messages(self, messages: AsyncIterable[str]):
         async for message in messages:
             if message == "empty":
-                logging.info(f"[Tank] tank is empty.")
+                logging.info(f"[Tank] Tank is empty.")
                 self.__current_status = CurrentStatus.TANK_EMPTY
             elif message == "refilled":
-                logging.info(f"[Tank] tank was refilled.")
+                logging.info(f"[Tank] Tank was refilled.")
                 self.__current_status = CurrentStatus.IDLE
             else:
-                logging.warning(f"[Tank] unknown {message=}.")
+                logging.warning(f"[Tank] Unknown {message=}.")
 
     async def __handle_moisture_messages(self, messages: AsyncIterable[str]):
         async for message in messages:
@@ -144,9 +144,14 @@ class WateringManager:
             if match:
                 first_sensor_value = int(match.group(1))
                 second_sensor_value = int(match.group(2))
-                logging.warning(f"[Moisture] new measurements: {first_sensor_value=} and {second_sensor_value=}.")
+                logging.info(f"[Moisture] New measurements: {first_sensor_value=} and {second_sensor_value=}.")
+                if self.__client is not None:
+                    logging.info(f"[Moisture] Redirect measurements in separate topics.")
+                    for sensor_index, sensor_value in enumerate([first_sensor_value, second_sensor_value]):
+                        topic = f"{self.__watering_config['topic_root']}/moisture/sensor{sensor_index+1}"
+                        await self.__client.publish(topic=topic, payload=sensor_value, qos=2)
             else:
-                logging.warning(f"[Moisture] could not parse {message=}.")
+                logging.warning(f"[Moisture] Could not parse {message=}.")
 
     async def __connect_to_mqtt_broker_and_subscribe_to_topics(self):
         async with AsyncExitStack() as stack:
