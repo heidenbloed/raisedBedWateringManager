@@ -2,3 +2,4 @@ host: XXX
 port: 1883
 user: XXX
 password: XXX
+reconnect_interval: 2
